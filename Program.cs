@@ -40,8 +40,8 @@ namespace ClangOnlyChangedLines
             //    return;
             //}
 
-            string pathToProject = @"c:\dev\here\olympia\mos";//args[0];
-            string pathToClang = @"C:\Program Files\LLVM\bin\clang-format.exe";//args[1];
+            string pathToProject = args[0]; //@"c:\dev\here\olympia\mos";//
+            string pathToClang   = args[1]; //@"C:\Program Files\LLVM\bin\clang-format.exe";
             //git diff -U0
             string fileChangePattern = @"@@[\s]+(-|\+)([0-9]*)[\s]*(,([0-9]+))?[\s]+(-|\+)([0-9]*)[\s]*(,([0-9]+))?";
             string fileRegexPattern = @"diff --git a(\/[A-z0-9_\/\-.]+)";
