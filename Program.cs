@@ -14,7 +14,7 @@ namespace ClangOnlyChangedLines
         {
             Process gitProcess = new Process();
             gitProcess.StartInfo.WorkingDirectory = pathToFiles;
-            gitProcess.StartInfo.FileName = @"c:\Program Files\git\bin\git.exe";
+            gitProcess.StartInfo.FileName = "git";
             gitProcess.StartInfo.Arguments = "diff -U0";
             gitProcess.StartInfo.UseShellExecute = false;
             gitProcess.StartInfo.RedirectStandardOutput = true;
