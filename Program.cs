@@ -30,18 +30,22 @@ namespace ClangOnlyChangedLines
 
         static void Main(string[] args)
         {
-            //if(args.Length < 2)
-            //{
-            //    Console.Write(@"Program usage: arg0 - path to the directory where you changes belong and must be formated, arg1 - path to clang executable
-            //                !!!!Warning!!!!
-            //                Run this program BEFORE you made git commit!
-            //                Otherwise it will not work!
-            //            ");
-            //    return;
-            //}
-
-            string pathToProject = args[0]; //@"c:\dev\here\olympia\mos";//
-            string pathToClang   = args[1]; //@"C:\Program Files\LLVM\bin\clang-format.exe";
+#if !DEBUG
+            if(args.Length < 2)
+            {
+                Console.Write(@"Program usage: arg0 - path to the directory where you changes belong and must be formated, arg1 - path to clang executable
+                            !!!!Warning!!!!
+                            Run this program BEFORE you made git commit!
+                            Otherwise it will not work!
+                        ");
+                return;
+            }
+            string pathToProject  = args[0];
+            string pathToClang    = args[1];
+#else
+            string pathToProject = @"c:\dev\here\olympia\mos";
+            string pathToClang = @"C:\Program Files\LLVM\bin\clang-format.exe";
+#endif
             //git diff -U0
             string fileChangePattern = @"@@[\s]+(-|\+)([0-9]*)[\s]*(,([0-9]+))?[\s]+(-|\+)([0-9]*)[\s]*(,([0-9]+))?";
             string fileRegexPattern = @"diff --git a(\/[A-z0-9_\/\-.]+)";
@@ -51,8 +55,9 @@ namespace ClangOnlyChangedLines
             string git_output = getGitDiffOutput(pathToProject);
             MatchCollection fileMatches = fileRegex.Matches(git_output);
             Dictionary<string, List<Tuple<int, int>>> changesInFiles = new Dictionary<string, List<Tuple<int, int>>>();
-            int prevMatch = 0;
-            bool firstRun = true;
+            
+            Match prevMatch = fileMatches[0];
+
             foreach (Match fileMatch in fileMatches)
             {
                 string fileName = fileMatch.Groups[1].Value;
@@ -60,11 +65,11 @@ namespace ClangOnlyChangedLines
 
                 Func<int> getSubstrLength = () =>
                 {
-                    if (fileMatch.NextMatch() != null && fileMatch.NextMatch().Index!=0)
+                    if (fileMatch.NextMatch().Index!=0)
                     {
-                        prevMatch = (firstRun) ?  0 : fileMatch.Index;
-                        if (firstRun) { firstRun = false;  }
-                        return fileMatch.NextMatch().Index - prevMatch;
+                        int strLen = fileMatch.NextMatch().Index - prevMatch.Index;
+                        prevMatch = fileMatch;
+                        return strLen;
                     }
                     else
                     {
@@ -73,6 +78,7 @@ namespace ClangOnlyChangedLines
                 };
                 int substrLength = getSubstrLength();
                 string file_diff_data = git_output.Substring(fileMatch.Index, substrLength);
+                Console.Write(file_diff_data);
                 MatchCollection changesMatches = changeRegex.Matches(file_diff_data);
 
                 foreach (Match match in changesMatches)
@@ -130,7 +136,7 @@ namespace ClangOnlyChangedLines
             {
                 //String s = String.Format("The current price is {0} per ounce.",
                 //pricePerOunce);
-                clangArgs.Append(string.Format(@" -lines {0}:{1} ", change.Item1.ToString(), (change.Item1+change.Item2).ToString()));
+                clangArgs.Append(string.Format(@" -lines {0}:{1} ", change.Item1.ToString(), (change.Item1 + change.Item2).ToString()));
 
             }
             clangArgs.Append(" -style=file ");
