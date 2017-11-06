@@ -104,7 +104,7 @@ namespace ClangOnlyChangedLines
                 string fileName = changeInFile.Key;
                 var changesList = changeInFile.Value;
                 string fullPathToFile = pathToProject + fileName.Replace(@"/", @"\");
-                clangFormatFile(pathToClang, createClangArgs(changesList, fullPathToFile), fullPathToFile);
+                clangFormatFile(pathToClang, createClangArgs(changesList, fullPathToFile), fullPathToFile, Encoding.ASCII);
             }
 
         }
@@ -126,10 +126,10 @@ namespace ClangOnlyChangedLines
 
             }
             clangArgs.Append(" -style=file ");
-            clangArgs.Append(" " + fullPathToFile + " ");
+            clangArgs.Append(" -i " + fullPathToFile);
             return clangArgs.ToString();
         }
-        static void clangFormatFile(string clangPath, string clangArgs, string fullPathToFile)
+        static void clangFormatFile(string clangPath, string clangArgs, string fullPathToFile, Encoding encoding)
         {
             var clangProcess = new Process
             {
@@ -150,11 +150,12 @@ namespace ClangOnlyChangedLines
             string error_output = (clangProcess.StandardError.ReadToEnd());
             clangProcess.WaitForExit();
             //write clang output back to file
-            using (System.IO.StreamWriter file =
-                                    new System.IO.StreamWriter(fullPathToFile))
-            {
-                file.Write(output);
-            }
+
+            //using (System.IO.StreamWriter file =
+            //                        new System.IO.StreamWriter(fullPathToFile, false, encoding))
+            //{
+            //    file.Write(output);
+            //}
         }
     }
 }
