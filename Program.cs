@@ -14,7 +14,7 @@ namespace ClangOnlyChangedLines
         {
             Process gitProcess = new Process();
             gitProcess.StartInfo.WorkingDirectory = pathToFiles;
-            gitProcess.StartInfo.FileName = @"c:\Program Files\git\bin\git.exe";
+            gitProcess.StartInfo.FileName = @"git";
             gitProcess.StartInfo.Arguments = "diff -U0";
             gitProcess.StartInfo.UseShellExecute = false;
             gitProcess.StartInfo.RedirectStandardOutput = true;
@@ -26,20 +26,22 @@ namespace ClangOnlyChangedLines
             gitProcess.WaitForExit();
             return output;
         }
+
+
         static void Main(string[] args)
         {
-            if(args.Length < 2)
-            {
-                Console.Write(@"Program usage: arg0 - path to the directory where you changes belong and must be formated, arg1 - path to clang executable
-                            !!!!Warning!!!!
-                            Run this program BEFORE you made git commit!
-                            Otherwise it will not work!
-                        ");
-                return;
-            }
+            //if(args.Length < 2)
+            //{
+            //    Console.Write(@"Program usage: arg0 - path to the directory where you changes belong and must be formated, arg1 - path to clang executable
+            //                !!!!Warning!!!!
+            //                Run this program BEFORE you made git commit!
+            //                Otherwise it will not work!
+            //            ");
+            //    return;
+            //}
 
-            string pathToProject = args[0];
-            string pathToClang = args[1];
+            string pathToProject = @"c:\dev\here\olympia\mos";//args[0];
+            string pathToClang = @"C:\Program Files\LLVM\bin\clang-format.exe";//args[1];
             //git diff -U0
             string fileChangePattern = @"@@[\s]+(-|\+)([0-9]*)[\s]*(,([0-9]+))?[\s]+(-|\+)([0-9]*)[\s]*(,([0-9]+))?";
             string fileRegexPattern = @"diff --git a(\/[A-z0-9_\/\-.]+)";
@@ -49,22 +51,28 @@ namespace ClangOnlyChangedLines
             string git_output = getGitDiffOutput(pathToProject);
             MatchCollection fileMatches = fileRegex.Matches(git_output);
             Dictionary<string, List<Tuple<int, int>>> changesInFiles = new Dictionary<string, List<Tuple<int, int>>>();
+            int prevMatch = 0;
+            bool firstRun = true;
             foreach (Match fileMatch in fileMatches)
             {
                 string fileName = fileMatch.Groups[1].Value;
                 changesInFiles.Add(fileName, new List<Tuple<int, int>>());
+
                 Func<int> getSubstrLength = () =>
                 {
                     if (fileMatch.NextMatch() != null && fileMatch.NextMatch().Index!=0)
                     {
-                        return fileMatch.NextMatch().Index;
+                        prevMatch = (firstRun) ?  0 : fileMatch.Index;
+                        if (firstRun) { firstRun = false;  }
+                        return fileMatch.NextMatch().Index - prevMatch;
                     }
                     else
                     {
                         return Math.Abs((git_output.Length - 1) - fileMatch.Index);
                     }
                 };
-                string file_diff_data = git_output.Substring(fileMatch.Index, getSubstrLength());
+                int substrLength = getSubstrLength();
+                string file_diff_data = git_output.Substring(fileMatch.Index, substrLength);
                 MatchCollection changesMatches = changeRegex.Matches(file_diff_data);
 
                 foreach (Match match in changesMatches)
